@@ -5,7 +5,6 @@ import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.google.cloud.secretmanager.v1.*;
 import com.google.protobuf.ByteString;
-import com.slack.api.model.block.element.RichTextSectionElement;
 
 import java.io.BufferedWriter;
 import java.time.*;
@@ -61,13 +60,18 @@ public class StandupSally implements HttpFunction {
 
             // last slack handle to run standup
             SecretVersionName lastUserToRunStandupSecretVersionName = SecretVersionName.of(PROJECT_ID, LAST_USER_TO_RUN_STANDUP_SECRET_NAME, "latest");
+            SecretVersion lastUserToRunStandupSecretVersion = client.getSecretVersion(lastUserToRunStandupSecretVersionName);
+
             AccessSecretVersionResponse lastUserToRunSecretVersionResponse = client.accessSecretVersion(lastUserToRunStandupSecretVersionName);
             String lastUserHandleToRunStandup = lastUserToRunSecretVersionResponse.getPayload().getData().toStringUtf8();
 
             String nextUserHandleToRunStandup = getNextUserHandle(channelMemberHandles, lastUserHandleToRunStandup);
 
-            updateLastUserSecret(client, nextUserHandleToRunStandup, PROJECT_ID, LAST_USER_TO_RUN_STANDUP_SECRET_NAME);
-
+            updateLastUserSecret(client,
+                    nextUserHandleToRunStandup,
+                    PROJECT_ID,
+                    LAST_USER_TO_RUN_STANDUP_SECRET_NAME,
+                    lastUserToRunStandupSecretVersion);
             final BufferedWriter writer = response.getWriter();
             writer.write("Done!" + nextUserHandleToRunStandup);
 
@@ -82,13 +86,21 @@ public class StandupSally implements HttpFunction {
 
     private void updateLastUserSecret(SecretManagerServiceClient client,
                                       String nextUserHandleToRunStandup,
-                                      String projectId, String secretId) {
+                                      String projectId, String secretId,
+                                      SecretVersion lastUserToRunStandupSecretVersionName) {
         SecretName secretName = SecretName.of(projectId, secretId);
         SecretPayload payload =
                 SecretPayload.newBuilder()
                         .setData(ByteString.copyFromUtf8(nextUserHandleToRunStandup))
                         .build();
-        SecretVersion version = client.addSecretVersion(secretName, payload);
+        client.addSecretVersion(secretName, payload);
+
+        //now delete the old version because suspect this is accruing costs (6 versions allowed in free tier)
+        DestroySecretVersionRequest destroySecretVersionRequest = DestroySecretVersionRequest.newBuilder()
+                .setName(lastUserToRunStandupSecretVersionName.getName())
+                .build();
+
+        client.destroySecretVersion(destroySecretVersionRequest);
     }
 
     private String getNextUserHandle(List<String> channelMemberHandles, String lastUser) {

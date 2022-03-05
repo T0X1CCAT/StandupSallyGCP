@@ -1,10 +1,11 @@
-package functions;
+package com.redletra.standupsally.functions;
 
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.google.cloud.secretmanager.v1.*;
 import com.google.protobuf.ByteString;
+import com.redletra.standupsally.slack.StandupSallySlackApiInvoker;
 
 import java.io.BufferedWriter;
 import java.time.*;

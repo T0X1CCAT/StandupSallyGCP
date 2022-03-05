@@ -1,4 +1,4 @@
-package functions;
+package com.redletra.standupsally.slack;
 
 import com.slack.api.Slack;
 import com.slack.api.methods.MethodsClient;

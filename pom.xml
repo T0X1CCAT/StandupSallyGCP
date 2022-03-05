@@ -65,7 +65,7 @@
                 <artifactId>function-maven-plugin</artifactId>
                 <version>0.10.0</version>
                 <configuration>
-                    <functionTarget>functions.StandupSally</functionTarget>
+                    <functionTarget>com.redletra.standupsally.functions.StandupSally</functionTarget>
                 </configuration>
             </plugin>
         </plugins>

@@ -2,3 +2,7 @@ This can be used to send a message to a Slack channel, telling the team members 
 
 --log into GCP locally
 gcloud auth application-default login
+
+--to run in ide
+mvn function:run
+

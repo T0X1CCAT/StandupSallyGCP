@@ -14,12 +14,11 @@ public class Utils {
 
         return Arrays.stream(channelToUsersString.split(";"))
             .map(entry -> entry.split("="))
-            .peek(p -> System.out.println(p))
-            .collect(Collectors.toMap(entry -> entry[0], entry -> {
-                return Stream.of(entry[1]
+            .collect(Collectors.toMap(entry -> entry[0], entry ->
+                 Stream.of(entry[1]
                                 .split(",", -1))
-                        .collect(Collectors.toList());
-            }));
+                        .collect(Collectors.toList())
+            ));
     }
 
     public static Map<String, String> convertChannelIdToUserHandleStringToMap(String channelIdToUserHandleString ) {
@@ -30,6 +29,7 @@ public class Utils {
 
     /*
     find the next user to run standup from the last user in each channel to run standup
+    @Return Map of channelId to the next user to run standup
      */
     public static Map<String, String> getNextUserHandles(Map<String, List<String>> channelIdToMemberHandlesMap,
                                                    Map<String, String> channelIdToUserThatLastRanStandup) {
@@ -39,12 +39,14 @@ public class Utils {
         channelIdToUserThatLastRanStandup.forEach((channelId, userHandleToLastRunStandup) -> {
             List<String> userHandlesInChannel = channelIdToMemberHandlesMap.get(channelId);
             if(userHandlesInChannel != null) {
-                Optional<Integer> index = Optional.ofNullable(userHandlesInChannel.indexOf(userHandleToLastRunStandup));
+                int userHandleIndex = userHandlesInChannel.indexOf(userHandleToLastRunStandup);
 
+                int newUserHandleIndex = 0;
                 // if the last user isn't in the list anymore then just start the list again
-                Integer newUserHandleIndex = index.map(userHandleIndex -> {
-                    return (userHandleIndex == userHandlesInChannel.size()-1) ? 0: userHandleIndex.intValue() + 1;
-                }).orElse(0);
+                if (userHandleIndex != -1) {
+                    newUserHandleIndex = (userHandleIndex == userHandlesInChannel.size()-1) ? 0: userHandleIndex + 1;
+                }
+
                 String newUserHandle = userHandlesInChannel.get(newUserHandleIndex);
                 channelIdToUserHandleWhoWillRunStandupMap.put(channelId, newUserHandle);
             }
@@ -53,14 +55,39 @@ public class Utils {
     }
 
     /*
-    this converts the Map into a string of format we want to save to a secrt
+        This converts the ChannelIdToLastUserToRunStandupMap into a string of format we want to save to a secret
      */
-    public static String generateSecretStringFromMap(Map<String, String> channelIdToNextUserHandleToRunStandupMap) {
+    public static String generateSecretStringFromChannelIdToLastUserToRunStandupMap(Map<String, String> channelIdToNextUserHandleToRunStandupMap) {
         return channelIdToNextUserHandleToRunStandupMap.entrySet()
             .stream()
             .map(entry -> entry.getKey() + "=" + entry.getValue())
             .collect(Collectors.joining(","));
 
     }
+
+    /*
+    This converts the ChannelIdToUserHandlesListMap into a string of format we want to save to a secret
+ */
+    public static String generateSecretStringFromChannelIdToUserHandlesListMap(Map<String, List<String>> channelIdToUserHandlesListMap) {
+        return channelIdToUserHandlesListMap.entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + "=" + (entry.getValue().stream().map(user -> user ).collect(Collectors.joining(","))))
+                .collect(Collectors.joining(";"));
+
+    }
+
+    /*
+     * The sprint start for each channel is just used to as a start date from which we can calculate if today
+     * is the ending friday or beginning monday of a sprint. Ideally we could call the Jira API however I can't
+     * get through to the corporate jira (need VPN)
+     * @param channelToSprintStartDateMap
+     * @return
+     */
+//    public Map<String, Boolean> getIsChannelLastFridayOrFirstMondayOfSprintMap(Map<String, String> channelToSprintStartDateMap,
+//                                                                               Map<String, List<String>> channelToUserListMap) {
+//        channelToSprintStartDateMap
+//    }
+
+
 
 }

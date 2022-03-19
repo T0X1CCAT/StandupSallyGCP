@@ -55,7 +55,7 @@ public class StandupSally implements HttpFunction {
             // (secret has payload max of 64Kb so we should be good for a few teams
             Map<String, List<String>> channelIdToUserListMap = this.secretUtils.getChannelIdToUserListMap(client).getValue0();
 
-            // last slack handle to run standup
+            // get the channel to last slack handle to run standup
             Pair<Map<String, String>, SecretVersion> lastUserForEachChannelToRunStandupAndSecretVersionPair =
                     secretUtils.getUserForEachChannelWhoLastRanStandup(client);
 
@@ -63,17 +63,21 @@ public class StandupSally implements HttpFunction {
             // need this because we will have to delete the old version after we update the user who will run standup today
             SecretVersion channelIdToUserWhoLastRanStandupSecretVersion = lastUserForEachChannelToRunStandupAndSecretVersionPair.getValue1();
 
-            Map<String, String> nextUserHandleForEachChannelToRunStandup = Utils.getNextUserHandles(channelIdToUserListMap,
-                channelIdToUserWhoLastRanStandupMap);
+            if(Utils.notFirstMondayOfSprint(this.secretUtils.getSprintStartDate(client), LocalDate.now())) {
+                Map<String, String> nextUserHandleForEachChannelToRunStandup = Utils.getNextUserHandles(channelIdToUserListMap,
+                        channelIdToUserWhoLastRanStandupMap);
 
-            updateLastUserSecret(client,
-                    nextUserHandleForEachChannelToRunStandup,
-                    channelIdToUserWhoLastRanStandupSecretVersion);
+                updateLastUserSecret(client,
+                        nextUserHandleForEachChannelToRunStandup,
+                        channelIdToUserWhoLastRanStandupSecretVersion);
+
+                standupSallySlackApiInvoker.informStandupRunner(nextUserHandleForEachChannelToRunStandup, slackOauthToken);
+            }
 
             final BufferedWriter writer = response.getWriter();
             writer.write("Done!");
 
-            standupSallySlackApiInvoker.informStandupRunner(nextUserHandleForEachChannelToRunStandup, slackOauthToken);
+
         }
     }
 

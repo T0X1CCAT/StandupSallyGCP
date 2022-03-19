@@ -1,5 +1,7 @@
 package com.redletra.standupsally.utils;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,6 +76,11 @@ public class Utils {
                 .map(entry -> entry.getKey() + "=" + (entry.getValue().stream().map(user -> user ).collect(Collectors.joining(","))))
                 .collect(Collectors.joining(";"));
 
+    }
+
+    public static boolean notFirstMondayOfSprint (LocalDate mondaySprintLocalDate, LocalDate today) {
+        long daysBetween = ChronoUnit.DAYS.between(mondaySprintLocalDate, today );
+        return daysBetween % 14 != 0;
     }
 
     /*

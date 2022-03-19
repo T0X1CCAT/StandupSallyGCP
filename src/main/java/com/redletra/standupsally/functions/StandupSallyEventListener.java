@@ -10,7 +10,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.redletra.standupsally.utils.InvalidAppRequestException;
 import com.redletra.standupsally.utils.SecretUtils;
-import com.redletra.standupsally.utils.Utils;
 import org.javatuples.Pair;
 
 import javax.crypto.Mac;
@@ -29,6 +28,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static com.redletra.standupsally.utils.Constants.*;
+import static com.redletra.standupsally.utils.Utils.generateSecretStringFromChannelIdToUserHandlesListMap;
 
 public class StandupSallyEventListener implements HttpFunction {
 
@@ -212,7 +212,7 @@ public class StandupSallyEventListener implements HttpFunction {
     private void updateChannelIdToUserListSecret(SecretManagerServiceClient client,
                                                  Map<String, List<String>> updatedChannelIdToUserListMap,
                                                  SecretVersion slackChannelIdToMemberHandlesSecretVersion) {
-        String newChannelIdToUserListMapString = Utils.generateSecretStringFromChannelIdToUserHandlesListMap(updatedChannelIdToUserListMap);
+        String newChannelIdToUserListMapString = generateSecretStringFromChannelIdToUserHandlesListMap(updatedChannelIdToUserListMap);
         this.secretUtils.createNewSecretVersionAndDeleteOld(newChannelIdToUserListMapString,
                 client,
                 slackChannelIdToMemberHandlesSecretVersion,

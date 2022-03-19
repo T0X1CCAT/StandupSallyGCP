@@ -1,12 +1,16 @@
 package com.redletra.standupsally.utils;
 
+import net.bytebuddy.asm.Advice;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.redletra.standupsally.utils.Utils.notFirstMondayOfSprint;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class UtilsTest {
 
@@ -47,26 +51,45 @@ public class UtilsTest {
 
         // happy path
         Map<String, String> lastUsersToRunStandupInEachChannel = Map.of("channel1", "@steve", "channel2", "@sally");
-        Map<String, String> nextUserHandles = new Utils().getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
+        Map<String, String> nextUserHandles = Utils.getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
         assertEquals("@felix", nextUserHandles.get("channel1"));
         assertEquals("@jude", nextUserHandles.get("channel2"));
 
         // test when last user in list was last to run
         lastUsersToRunStandupInEachChannel = Map.of("channel1", "@felix", "channel2", "@peter");
-        nextUserHandles = new Utils().getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
+        nextUserHandles = Utils.getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
         assertEquals("@tom", nextUserHandles.get("channel1"));
         assertEquals("@sally", nextUserHandles.get("channel2"));
 
         //test when the user has been removed
         lastUsersToRunStandupInEachChannel = Map.of("channel1", "@john", "channel2", "@peter");
-        nextUserHandles = new Utils().getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
+        nextUserHandles = Utils.getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
         assertEquals("@tom", nextUserHandles.get("channel1"));
 
         //test when there is no channel in the channel to users map
         lastUsersToRunStandupInEachChannel = Map.of("channel999", "@john", "channel2", "@peter");
-        nextUserHandles = new Utils().getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
+        nextUserHandles = Utils.getNextUserHandles(channelIdToMemberHandlesMap, lastUsersToRunStandupInEachChannel);
         assertEquals(null, nextUserHandles.get("channel1"));
 
+    }
+
+    @Test
+    void notFirstMondayOfSprintTest() {
+        LocalDate today = LocalDate.parse("27/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        LocalDate mondaySprintStart = LocalDate.parse("14/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        assertTrue(notFirstMondayOfSprint(mondaySprintStart, today));
+
+        today = LocalDate.parse("29/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        mondaySprintStart = LocalDate.parse("14/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        assertTrue(notFirstMondayOfSprint(mondaySprintStart, today));
+
+        today = LocalDate.parse("28/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        mondaySprintStart = LocalDate.parse("14/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        assertFalse(notFirstMondayOfSprint(mondaySprintStart, today));
+
+        today = LocalDate.parse("11/04/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        mondaySprintStart = LocalDate.parse("14/03/2022", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        assertFalse(notFirstMondayOfSprint(mondaySprintStart, today));
     }
 
     @Test

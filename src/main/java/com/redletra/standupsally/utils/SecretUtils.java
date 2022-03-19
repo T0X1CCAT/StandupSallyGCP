@@ -4,8 +4,12 @@ import com.google.cloud.secretmanager.v1.*;
 import com.google.protobuf.ByteString;
 import org.javatuples.Pair;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SecretUtils {
 
@@ -68,5 +72,23 @@ public class SecretUtils {
         String lastUserHandleForEachChannelToRunStandup = lastUserForEachChannelToRunStandupSecretVersionResponse.getPayload().getData().toStringUtf8();
         Map<String, String> channelIdToUserWhoLastRanStandupMap = Utils.convertChannelIdToUserHandleStringToMap(lastUserHandleForEachChannelToRunStandup);
         return new Pair<>(channelIdToUserWhoLastRanStandupMap, lastUserForEachChannelToRunStandupSecretVersion);
+    }
+
+    public LocalDate getSprintStartDate(SecretManagerServiceClient client) {
+        SecretVersionName sprintStartDateForChannelsName =
+                SecretVersionName.of(Constants.PROJECT_ID, Constants.CHANNEL_TO_SPRINT_START_DATE, "latest");
+
+        AccessSecretVersionResponse sprintStartDateForChannelsSecretVersionResponse =
+                client.accessSecretVersion(sprintStartDateForChannelsName);
+        return convertToLocalDate(sprintStartDateForChannelsSecretVersionResponse.getPayload().getData().toStringUtf8());
+
+    }
+
+    /*
+       dateString in format dd/MM/yyyy
+     */
+    private LocalDate convertToLocalDate(String dateString) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return LocalDate.parse(dateString, formatter);
     }
 }

@@ -1,8 +1,16 @@
-This can be used to send a message to a Slack channel, telling the team members whose turn it is to run standup on the day. The slack handles are stored in a comma sep string within GCP secret manager. Another secret stores the last user who ran standup. ANother secret stores the slack channel id and a 4th secret stores the slack auth token. Bob's your relative.
+# Functionality
+- GCP function to alert slack channels who the next standup runner should be
+- GCP function which listens to Slack events
+  - channel add user event
+  - channel remove user event
+  - app mention event to add user (eg @StandupSally add @jsmith)
+  - app mention event to remove user (eg @StandupSally remove @jsmith)
+  - app mention event to add all users in the channel to StandupSally (eg @StandupSally add us)
 
---log into GCP locally
-gcloud auth application-default login
-
---to run in ide
-mvn function:run
-
+# Tech
+- requires GCP secrets to store data (5 which keeps it in the free tier)
+  - channelIdTOMemberSlackHandles
+  - channelTolastUserToRunStandup
+  - mondaySprintStartDate
+  - slackOauthToken
+  - slackSigningSecret

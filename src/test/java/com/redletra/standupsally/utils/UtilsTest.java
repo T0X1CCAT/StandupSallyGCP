@@ -1,6 +1,7 @@
 package com.redletra.standupsally.utils;
 
-import net.bytebuddy.asm.Advice;
+import com.google.cloud.functions.HttpRequest;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -8,9 +9,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.redletra.standupsally.utils.Utils.notFirstMondayOfSprint;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class UtilsTest {
 
@@ -31,6 +35,13 @@ public class UtilsTest {
         channelToUserMap = new Utils().convertChannelToUsersStringToMap(channelToUserString);
         assertEquals(1, channelToUserMap.entrySet().size());
         assertEquals("@tom", channelToUserMap.get("channelid1").get(0));
+
+        // just one user
+        channelToUserString = "channel1=@tom,@charles;channel2=";
+        channelToUserMap = new Utils().convertChannelToUsersStringToMap(channelToUserString);
+        assertEquals(2, channelToUserMap.entrySet().size());
+        assertEquals("@tom", channelToUserMap.get("channel1").get(0));
+        assertTrue(channelToUserMap.get("channel2").isEmpty());
     }
 
     @Test
@@ -113,6 +124,41 @@ public class UtilsTest {
         LinkedHashMap channelIdToUsersListMap = new LinkedHashMap();
         channelIdToUsersListMap.put("channel1", usersChannel1);
         channelIdToUsersListMap.put("channel2", usersChannel2);
-        assertEquals("channel1=@tom,@steve,@henry;channel2=@dave,@tim", new Utils().generateSecretStringFromChannelIdToUserHandlesListMap(channelIdToUsersListMap));
+        assertEquals("channel1=@tom,@steve,@henry;channel2=@dave,@tim", Utils.generateSecretStringFromChannelIdToUserHandlesListMap(channelIdToUsersListMap));
     }
+
+    @Test
+    void appMentionEventSuccessfulTest() {
+        Assertions.assertEquals("U01LMQ1KAFL",
+                Utils.getUserFromAppMentionEvent("<@U032VM4S54Z> remove <@U01LMQ1KAFL>").get());
+    }
+
+    @Test
+    void appMentionEventFailedTest() {
+        Assertions.assertThrows(InvalidAppRequestException.class, () ->
+            Utils.getUserFromAppMentionEvent("<@U032VM4S54Z> remove ").get());
+    }
+
+    @Test
+    void generateSlackUsersStringTest() {
+        List users = List.of("12345", "234567", "78903");
+        assertEquals("<@12345>,<@234567>,<@78903>", Utils.generateSlackUsersString(users));
+    }
+
+    @Test
+    void getSlackRetryNumHeaderTest() {
+        HttpRequest mock = mock(HttpRequest.class);
+        when(mock.getFirstHeader("x-slack-retry-num")).thenReturn(Optional.empty());
+        Assertions.assertEquals(Optional.empty(), Utils.getSlackRetryNumHeader(mock));
+
+        when(mock.getFirstHeader("X-Slack-Retry-Num")).thenReturn(Optional.empty());
+        Assertions.assertEquals(Optional.empty(), Utils.getSlackRetryNumHeader(mock));
+
+        when(mock.getFirstHeader("x-slack-retry-num")).thenReturn(Optional.of("retryNum"));
+        Assertions.assertEquals(Optional.of("retryNum"), Utils.getSlackRetryNumHeader(mock));
+
+        when(mock.getFirstHeader("X-Slack-Retry-Num")).thenReturn(Optional.of("retryNum"));
+        Assertions.assertEquals(Optional.of("retryNum"), Utils.getSlackRetryNumHeader(mock));
+    }
+
 }

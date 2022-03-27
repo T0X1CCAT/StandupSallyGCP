@@ -45,6 +45,7 @@ public class SecretUtils {
                         .build();
         client.addSecretVersion(secretName, payload);
 
+        System.out.println("destroy version " + oldSecretVersionToDelete.getName());
         //delete the old version
         DestroySecretVersionRequest destroySecretVersionRequest = DestroySecretVersionRequest.newBuilder()
                 .setName(oldSecretVersionToDelete.getName())

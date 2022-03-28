@@ -63,7 +63,7 @@ public class StandupSally implements HttpFunction {
             // need this because we will have to delete the old version after we update the user who will run standup today
             SecretVersion channelIdToUserWhoLastRanStandupSecretVersion = lastUserForEachChannelToRunStandupAndSecretVersionPair.getValue1();
 
-            if(Utils.notFirstMondayOfSprint(this.secretUtils.getSprintStartDate(client), LocalDate.now())) {
+            if(Utils.notFirstMondayOfSprint(this.secretUtils.getSprintStartDate(client), LocalDate.now(ZoneId.of("Australia/Sydney")))) {
                 Map<String, String> nextUserHandleForEachChannelToRunStandup = Utils.getNextUserHandles(channelIdToUserListMap,
                         channelIdToUserWhoLastRanStandupMap);
 
